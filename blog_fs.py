@@ -449,7 +449,6 @@ class EditExisting(Handler):
         if loggedin is None:
             self.render("signup.html")
         else:
-            # make sure user is right?
             key = db.Key.from_path('Post', int(post_id))
             post = db.get(key)
             if post:
@@ -476,8 +475,7 @@ class EditExisting(Handler):
             post.put()
             self.redirect('/blog/%s' % str(post_id))
         else:
-            error = "Please enter both a subject and content for your "
-            "blog entry."
+            error = "Please enter both subject and content"
             self.render("edit_post2.html", subject=subject, content=content,
                         error=error)
 
@@ -491,8 +489,11 @@ class DeletePostPage(Handler):
             #  delete the post
             key = db.Key.from_path('Post', int(post_id))
             post = db.get(key)
-            post.delete(deadline=2)
-            self.redirect("/")
+            #already have post_id
+            post.delete()
+            self.render("success.html", deletedthing="post", post_id=post_id, 
+                        write_out=False)
+
 
 ############################################
 # End edit post
@@ -600,7 +601,8 @@ class DeleteCommentPage(Handler):
             svr = post_id  # have to double tap to ensure it stays...
             comment.delete()  # somehow this deletes my post_id!!
             # self.redirect("/")
-            self.render("success.html", deletedthing="comment", post_id=svr)
+            self.render("success.html", deletedthing="comment", post_id=svr, 
+                        write_out=True)
             # back to comments list success
 
 
@@ -645,8 +647,7 @@ class UnLikePage(Handler):
             key_go = db.get(key)
             key_go.delete()
             self.render("successlike.html", loul="unliked")
-            
-            # back to comments list success
+
 
 ############################################
 # End of likes and unlikes
