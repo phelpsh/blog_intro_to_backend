@@ -1,0 +1,81 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="row">
+        <div class="col-xs-6">
+            <a href="/edit" class="btn btn-success mostly-opaque" role="button">Create New Post</a>
+        </div>
+        <div class="col-xs-6 text-right">
+            <a href="/logout" class="btn btn-warning btn-xs mostly-opaque" role="button">Logout</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <br>
+        </div>
+    </div>
+
+    {% for p in posts %}
+
+        <div class="row">
+            
+            <div class="col-md-12">
+                <h3>{{ p.subject }}</h3>
+            </div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="col-md-12 blog-metadata">
+                <p class="blog-metadata">Posted by {{ p.creator }} on {{ p.created }}</p>
+            </div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="col-md-12 blog-text">
+                <p>{{ p.content }}</p>
+            </div>
+
+        </div>
+
+        <div class="row">
+            
+            <div class="col-md-12">   
+
+                {% if p.creator == creator %}
+
+                    <a href="/editpost/{{ p.key().id() }}" class="btn btn-link btn-xs" role="button">Edit</a> 
+
+                {% else %}
+
+                    {% if p.key().id() in userlikes %}
+                        <a href="/unlike/{{ p.key().id() }}" class="btn btn-primary btn-xs half-opaque" role="button">Unlike</a> 
+                    {% else %}
+                        <a href="/like/{{ p.key().id() }}" class="btn btn-primary btn-xs mostly-opaque" role="button">Like</a>
+                    {% endif %}
+
+                {% endif %}
+
+                <a href="/comment/{{ p.key().id() }}" class="btn btn-danger half-opaque btn-xs" role="button">Comments</a>
+            
+            </div>
+        
+        </div>
+     
+        <div class="row">
+
+            <div class="col-md-12">
+                <hr>
+            </div>
+            
+        </div>
+
+    {% endfor %}
+
+{% endblock %}

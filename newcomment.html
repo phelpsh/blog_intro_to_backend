@@ -1,0 +1,61 @@
+{% extends "base_logged.html" %}
+
+{% block content %}
+
+	<div class="row">
+        
+        <div class="col-md-12">
+            <h2>New comment</h2>
+        </div>
+
+    </div>
+
+
+    <div class="row">
+        
+        <div class="col-md-12">
+            <div class="error">{{error}}</div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        
+        <div class="col-md-12">
+
+            <form method="post">
+
+            	<div class="form-group">
+                    <label for="comment">Comment</label>
+                    <textarea type="text" class="form-control" name="comment" value="{{comment}}">{{comment}}</textarea>
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-success mostly-opaque">Submit</button>
+                        <a href="/comment/{{post_id}}" class="btn btn-default" role="button">Cancel</a>
+                    </div>                  
+
+                <div>
+
+		    </form>
+
+		</div>
+
+	</div>
+
+	<div class="row">
+        
+        <div class="col-md-12">
+            <h2><br></h2>
+        </div>
+
+    </div>
+
+      
+
+
+{% endblock %}
+
+

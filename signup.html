@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="row">
+        
+        <div class="col-md-12">
+            <h3> Sign up here </h3>
+        </div>
+
+    </div>
+
+    <div class="row">
+        
+        <div class="col-md-12">
+
+            <form method="post">
+
+                <div class="form-group">
+                    <label for="username">Name</label>
+                    <label class="error">{{error_username}}</label>
+                    <input type="text" class="form-control" name="username" placeholder="Name" value="{{username}}">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <label class="error">{{error_password}}</label>
+                    <input type="password" class="form-control" name="password" placeholder="Password" value="{{password}}">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Verify password</label>
+                    <label class="error">{{error_verify}}</label>
+                    <input type="password" class="form-control" name="verify" placeholder="Password" value="">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email (optional)</label>
+                    <label class="error">{{error_email}}</label>
+                    <input type="email" class="form-control" name="email" placeholder="Email (optional)" value="{{email}}">
+                </div>
+
+                <button type="submit" class="btn btn-default">Submit</button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <br>
+        </div>
+        <div class="col-md-12">
+            Already have an account? Log in <a href="/login">here</a>.
+        </div>
+        <div class="col-md-12">
+            <br>
+        </div>
+        <div class="col-md-12">
+            <br>
+        </div>
+
+    </div>
+
+            <!--div>Username: 
+            	<input type="text" name="username" value="{{username}}"> {{error_username}}
+            </div>
+            <div>Password: 
+            	<input type="password" name="password" value="{{password}}"> {{error_password}}
+            </div>
+            <div>Verify Password: 
+            	<input type="password" name="verify" value=""> {{error_verify}}
+            </div>
+            <div>Email (optional):
+            	<input type="email" name="email" value="{{email}}"> {{error_email}}
+            </div>
+        
+            <div><input type="Submit"></div>
+        
+    </form-->
+
+{% endblock %}
+

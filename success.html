@@ -1,0 +1,33 @@
+{% extends "base_logged.html" %}
+
+{% block content %}
+
+	<div class="row">
+        
+        <div class="col-md-12">
+            <h2>Success!</h2>
+        </div>
+
+    </div>
+
+     <div class="row">
+        
+        <div class="col-md-12">
+            <p>Your {{deletedthing}} has been successfully deleted.</p>
+        </div>
+
+    </div>
+
+	{% if write_out %}
+	
+	    <div class="row">
+	        
+	        <div class="col-md-12">
+	            <a href="/comment/{{ post_id }}">Return to comments</a>
+	        </div>
+
+	    </div>  
+
+	{% endif %}
+
+{% endblock %}

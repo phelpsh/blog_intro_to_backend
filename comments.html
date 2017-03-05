@@ -1,0 +1,60 @@
+{% extends "base_logged.html" %}
+
+{% block content %}
+
+	<div class="row">
+        
+        <div class="col-md-12">
+            <h2>Comments for post: {{subject}}</h2>
+        </div>
+
+    </div>
+
+    {% for c in comments %}
+
+    <div class="row">
+        <div class="col-md-12">
+            {{ c.comment }}
+        </div>
+    </div>
+
+    <div class="row">        
+        <div class="col-md-12">
+            Author: {{ c.user }} 
+        </div>
+    </div>
+
+    {% if c.user == curuser %}
+
+        <div class="row">        
+	        <div class="col-md-12">
+	            <a href="/editcomment/{{ c.key().id() }}" class="btn btn-danger half-opaque btn-xs" role="button">Edit comment</a>
+	        </div>
+	    </div>
+
+    {% endif %}
+
+    <div class="row">        
+        <div class="col-md-12">
+            <hr> <!--To split between entries--> 
+        </div>
+    </div>
+        
+    {% endfor %}
+
+    <div class="row">        
+        <div class="col-md-12">
+            <a href="/newcomment/{{ post_id }}" class="btn btn-success mostly-opaque btn-xs" role="button">New  comment</a>
+        </div>
+    </div>
+
+    <!--a href="/newcomment/{{ post_id }}">comment</a-->
+    
+    <div class="row">        
+        <div class="col-md-12">
+            <br> <!--To split between entries--> 
+        </div>
+    </div>
+
+
+{% endblock %}

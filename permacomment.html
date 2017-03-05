@@ -1,0 +1,43 @@
+{% extends "base_logged.html" %}
+
+{% block content %}
+
+	<div class="row">
+        
+        <div class="col-md-12">
+            <h2>Your comment has been updated:</h2>
+        </div>
+
+    </div>
+
+	<div class="row">
+        
+        <div class="col-md-12">
+            <p> {{ comment }} </p>
+        </div>
+
+    </div>
+
+	<div class="row">
+        
+        <div class="col-md-12">
+            <a href="/comment/{{post_id}}" class="btn btn-danger half-opaque btn-xs" role="button">Return to comments</a>
+        </div>
+
+    </div>
+
+    <div class="row">
+        
+        <div class="col-md-12">
+            <br>
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+{% endblock %}

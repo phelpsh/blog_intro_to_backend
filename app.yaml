@@ -1,0 +1,75 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+
+- url: /templates
+  static_dir: /templates
+
+- url: /css
+  static_dir: css
+
+- url: /js
+  static_dir: js
+
+- url: /editpost/js
+  static_dir: js
+
+- url: /editpost/css
+  static_dir: css
+
+- url: /like/js
+  static_dir: js
+
+- url: /like/css
+  static_dir: css
+
+- url: /unlike/js
+  static_dir: js
+
+- url: /unlike/css
+  static_dir: css
+
+- url: /blog/js
+  static_dir: js
+
+- url: /blog/css
+  static_dir: css
+
+- url: /comment/js
+  static_dir: js
+
+- url: /comment/css
+  static_dir: css
+
+- url: /editcomment/js
+  static_dir: js
+
+- url: /editcomment/css
+  static_dir: css
+
+- url: /newcomment/js
+  static_dir: js
+
+- url: /newcomment/css
+  static_dir: css
+
+- url: /deletecomment/js
+  static_dir: js
+
+- url: /deletecomment/css
+  static_dir: css
+
+- url: /deletepost/js
+  static_dir: js
+
+- url: /deletepost/css
+  static_dir: css
+
+- url: /.*
+  script: blog_fs.app
+
+libraries:
+- name: jinja2
+  version: latest

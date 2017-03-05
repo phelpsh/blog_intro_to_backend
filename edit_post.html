@@ -1,0 +1,68 @@
+{% extends "base_logged.html" %}
+
+{% block content %}
+
+    <div class="row">
+        
+        <div class="col-md-12">
+            <h2>Create New Blog Post</h2>
+        </div>
+
+    </div>
+
+    <div class="row">
+        
+        <div class="col-md-12">
+            <div class="error">{{error}}</div>
+        </div>
+
+    </div>
+  
+    <div class="row">
+        
+        <div class="col-md-12">
+
+            <form method="post">
+
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" class="form-control" name="subject" placeholder="Subject" value="{{subject}}">
+                </div>
+                <div class="form-group">
+                    <label for="name">Content</label>
+                    <textarea rows="4" class="form-control" name="content" placeholder="Content" value="{{content}} | escape"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success mostly-opaque">Submit</button>
+                <a href="/" class="btn btn-default" role="button">Cancel</a>
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+        
+        <div class="col-md-12">
+            <br>
+        </div>
+
+    </div>
+    <!--label>
+        <div>Subject:</div>
+        <input type="text" name="subject" value="{{subject}}">
+      </label>
+      <label>
+        <div>Post:</div>
+        <textarea rows="4" cols="50" name="content" value="{{content}}">{{content}}</textarea>
+      </label>
+
+      <div class="error">{{error}}</div>
+      <input type="submit" name="submit" value="Submit">
+      <a class="cancel_button" href="/">Cancel</a-->
+
+
+
+
+{% endblock %}
+
+

@@ -1,0 +1,41 @@
+{% extends "base_logged.html" %}
+
+{% block content %}
+
+	<div class="row">
+        
+        <div class="col-md-12">
+            <h2>{{ subject }}</h2>
+        </div>
+
+    </div>
+
+	<div class="row">
+        
+        <div class="col-md-12">
+            <p> {{ content }} </p>
+        </div>
+
+    </div>
+
+    {% if creator == user %}
+
+	    <div class="row">
+
+	        <div class="col-md-12">
+	            <a href="/editpost/{{post_id}}">Edit</a>
+	        </div>
+	        
+	    </div>
+
+	{% endif %}
+
+    <div class="row">
+
+        <div class="col-md-12">
+            <hr>
+        </div>
+        
+    </div>
+
+{% endblock %}
