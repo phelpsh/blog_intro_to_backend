@@ -1,0 +1,145 @@
+/* style.css */
+
+/** {
+   border: 1px solid red !important;
+}
+*/
+
+* {
+    font-family: 'Crimson Text', serif;
+}
+
+/* Titles */
+
+h1 {
+    text-transform: uppercase;
+    text-align: left;
+    font-weight: 300;
+    font-size: 50px;
+    padding-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    color: #2d3c49;
+}
+h4 {
+    text-transform: uppercase;
+    text-align: left;
+    font-weight: bold;
+    font-size: 14px;
+    padding-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+h3 {
+    text-transform: uppercase;
+    text-align: left;
+    font-weight: 300;
+    font-size: 22px;
+    padding-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    color: #2d3c49;
+}
+
+h2 {
+    text-align: left;
+    font-weight: normal;
+    font-size: 24px;
+    margin-top: 0px;
+    margin-bottom: 5px;
+    color: #000000;
+}
+
+/* Heading and top area */
+
+hr {
+	border-color: #ffffff;
+	height: 2px;
+	background-color: #7d97ad;
+    margin-bottom: 10px;
+    margin-top: 5px;
+}
+
+.set-max {
+    max-width: 960px;
+}
+
+.vertical-align {
+    display: flex;
+    align-items: center;
+}
+
+/* for blog */
+
+.half-opaque { opacity: 0.5; }
+
+.mostly-opaque { opacity: 0.9; }
+
+body {
+    margin-left: 5px;
+}
+
+/* Content tweaks */
+
+.img-row {
+    max-height: 550px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.center-image {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.icon-design {
+    max-width: 30px;
+    border-color: #000;
+}
+
+.text-desc {
+    text-align: center;
+    font-weight: normal;
+    font-size: 12px;
+    margin-bottom: 20px;
+}
+
+.work-title {
+    margin-top: 15px;
+    margin-bottom: 0;
+}
+
+.blog-text {
+    font-size: 16px;
+}
+
+.blog-metadata {
+    font-size: 14px;
+    color: #7d97ad;
+    font-style: italic;
+}
+
+.error {
+    color: red;
+}
+
+.end-text {
+    margin-top: 18px;
+    margin-bottom: 20px;
+}
+
+/* Responsive */
+
+@media screen and (max-width: 715px) {
+    h1 { font-size: 50px; }
+}
+
+@media screen and (max-width: 665px) {
+    h1 { font-size: 35px; }
+}
+
+@media screen and (max-width: 450px) {
+    h1 { font-size: 28px; }
+}
+
