@@ -6,7 +6,6 @@ import hashlib
 import hmac
 import random
 import string
-from string import letters
 from google.appengine.ext import db
 # import models
 
@@ -410,7 +409,7 @@ class PostPage(Handler):
             p = db.get(key)
             # needs error checking; goes to blank screen if no p
             if not p:
-                self.error(404)
+                self.redirect("/")
                 return
             subject = p.subject
             content = p.content
@@ -453,17 +452,15 @@ class EditExisting(Handler):
     def get(self, post_id):
         if self.good_cookie_exists():
             key = db.Key.from_path('Post', int(post_id))
-            # if key:
-            #     self.redirect("/")
-
             post = db.get(key)
-            if post:
+            if not post:
+                self.redirect("/")
+                return
+            else:
                 subject = post.subject
                 content = post.content
-            else:
-                self.redirect("/")
-            self.render("edit_post2.html", subject=subject, content=content,
-                        post_id=post_id)
+                self.render("edit_post2.html", subject=subject,
+                            content=content, post_id=post_id)
         else:
             self.redirect("/login")
 
@@ -478,15 +475,15 @@ class EditExisting(Handler):
                 # write to DB...
                 key = db.Key.from_path('Post', int(post_id))
                 post = db.get(key)
-                # hooch - not sure about this
                 if not post:
                     self.redirect("/")
-                
+                    return
                 else:
                     post.subject = subject
                     post.content = content
                     post.creator = creator
-                    # p = Post(subject=subject, content=content, creator=creator)
+                    # p = Post(subject=subject, content=content,
+                    # creator=creator)
                     post.put()
                     self.redirect('/blog/%s' % str(post_id))
             else:
@@ -503,10 +500,14 @@ class DeletePostPage(Handler):
             #  delete the post
             key = db.Key.from_path('Post', int(post_id))
             post = db.get(key)
-            # already have post_id
-            post.delete()
-            self.render("success.html", deletedthing="post", post_id=post_id,
-                        write_out=False)
+            if not post:
+                self.redirect("/login")
+                return
+            else:
+                # already have post_id
+                post.delete()
+                self.render("success.html", deletedthing="post",
+                            post_id=post_id, write_out=False)
         else:
             self.redirect("/login")
 
@@ -532,6 +533,9 @@ class CommentPage(Handler):
             # display at top of page
             key = db.Key.from_path('Post', int(post_id))
             p = db.get(key)
+            if not p:
+                self.redirect("/")
+                return
             subject = p.subject
             self.render("comments.html", comments=comments, post_id=post_id,
                         curuser=curuser, subject=subject)
@@ -574,12 +578,13 @@ class EditCommentPage(Handler):
             # from DB, get info on that comment
             key = db.Key.from_path('Comment', int(comment_id))
             c = db.get(key)
-            if c:
+            if not c:
+                self.redirect("/")
+                return
+            else:
                 comment = c.comment
                 self.render("editcomment.html", comment=comment,
                             comment_id=comment_id)
-            else:
-                self.redirect("/")
         else:
             self.redirect("/login")
 
@@ -590,13 +595,18 @@ class EditCommentPage(Handler):
                 # write edits to DB...
                 key = db.Key.from_path('Comment', int(comment_id))
                 cm = db.get(key)
-                cm.comment = comment
-                # p = Post(subject=subject, content=content, creator=creator)
-                cm.put()
-                # go back to comments page for that post_id
-                # self.redirect('/comment/%s' % cm.post_id)
-                self.render("permacomment.html", comment=comment,
-                            post_id=cm.post_id)
+                if not cm:
+                    self.redirect("/")
+                    return
+                else:
+                    cm.comment = comment
+                    # p = Post(subject=subject, content=content,
+                    # creator=creator)
+                    cm.put()
+                    # go back to comments page for that post_id
+                    # self.redirect('/comment/%s' % cm.post_id)
+                    self.render("permacomment.html", comment=comment,
+                                post_id=cm.post_id)
             else:
                 self.redirect("/login")
         else:
@@ -610,12 +620,16 @@ class DeleteCommentPage(Handler):
             #  delete the comment
             key = db.Key.from_path('Comment', int(comment_id))
             comment = db.get(key)
-            post_id = comment.post_id
-            svr = post_id  # have to double tap to ensure it stays...
-            comment.delete()  # somehow this deletes my post_id!!
-            self.render("success.html", deletedthing="comment", post_id=svr,
-                        write_out=True)
-            # back to comments list success
+            if not comment:
+                self.redirect("/")
+                return
+            else:
+                post_id = comment.post_id
+                svr = post_id  # have to double tap to ensure it stays...
+                comment.delete()  # somehow this deletes my post_id!!
+                self.render("success.html", deletedthing="comment", post_id=svr,
+                            write_out=True)
+                # back to comments list success
         else:
             self.redirect("/login")
 
@@ -642,6 +656,7 @@ class LikePage(Handler):
             self.render("successlike.html", loul="liked")
         else:
             self.redirect("/login")
+
 
 class UnLikePage(Handler):
     def get(self, post_id):
