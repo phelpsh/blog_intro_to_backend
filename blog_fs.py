@@ -7,8 +7,7 @@ import hmac
 import random
 import string
 from google.appengine.ext import db
-# import models
-
+from models import User, Post, Like, Comment
 
 ############################################
 # Set-up and housekeeping
@@ -71,46 +70,37 @@ class Handler(webapp2.RequestHandler):
         else:
             return False
 
+    def user_owns_post(self, key):
+        h = self.request.cookies.get('user')
+        if not h == "":
+            username = h.split("|")[0]
+            p = db.get(key)
+            if not p:
+                return False
+            else:
+                if p.creator == username:
+                    return True
+        else:
+            return False
+
+    def user_owns_comment(self, key):
+        h = self.request.cookies.get('user')
+        if not h == "":
+            username = h.split("|")[0]
+            p = db.get(key)
+            if not p:
+                return False
+            else:
+                if p.user == username:
+                    return True
+        else:
+            return False
+
 
 ############################################
 # End set-up and housekeeping
 ############################################
 
-############################################
-# Datastore models
-############################################
-
-
-class User(db.Model):
-    """Sub model for representing a blog author."""
-    username = db.StringProperty(required=True)
-    password = db.StringProperty(required=True)
-    email = db.StringProperty(required=False)
-
-
-class Post(db.Model):
-    """Sub model for representing a blog posting."""
-    subject = db.StringProperty(required=True)
-    content = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    last_modified = db.DateTimeProperty(auto_now=True)
-    creator = db.StringProperty(required=True)
-
-
-class Comment(db.Model):
-    post_id = db.StringProperty(required=True)
-    comment = db.StringProperty(required=True)
-    user = db.StringProperty(required=True)
-
-
-class Like(db.Model):
-    post_id = db.StringProperty(required=True)
-    user = db.StringProperty(required=True)
-
-
-############################################
-# End datastore models
-############################################
 
 ############################################
 # Authentication section
@@ -407,7 +397,6 @@ class PostPage(Handler):
             user = h.split("|")[0]
             key = db.Key.from_path('Post', int(post_id))
             p = db.get(key)
-            # needs error checking; goes to blank screen if no p
             if not p:
                 self.redirect("/")
                 return
@@ -457,10 +446,13 @@ class EditExisting(Handler):
                 self.redirect("/")
                 return
             else:
-                subject = post.subject
-                content = post.content
-                self.render("edit_post2.html", subject=subject,
-                            content=content, post_id=post_id)
+                if self.user_owns_post(key):
+                    subject = post.subject
+                    content = post.content
+                    self.render("edit_post2.html", subject=subject,
+                                content=content, post_id=post_id)
+                else:
+                    self.redirect("/")
         else:
             self.redirect("/login")
 
@@ -479,13 +471,14 @@ class EditExisting(Handler):
                     self.redirect("/")
                     return
                 else:
-                    post.subject = subject
-                    post.content = content
-                    post.creator = creator
-                    # p = Post(subject=subject, content=content,
-                    # creator=creator)
-                    post.put()
-                    self.redirect('/blog/%s' % str(post_id))
+                    if self.user_owns_post(key):
+                        post.subject = subject
+                        post.content = content
+                        post.creator = creator
+                        post.put()
+                        self.redirect('/blog/%s' % str(post_id))
+                    else:
+                        self.redirect("/")
             else:
                 self.redirect("/login")
         else:
@@ -504,10 +497,12 @@ class DeletePostPage(Handler):
                 self.redirect("/login")
                 return
             else:
-                # already have post_id
-                post.delete()
-                self.render("success.html", deletedthing="post",
-                            post_id=post_id, write_out=False)
+                if self.user_owns_post(key):
+                    post.delete()
+                    self.render("success.html", deletedthing="post",
+                                post_id=post_id, write_out=False)
+                else:
+                    self.redirect("/")
         else:
             self.redirect("/login")
 
@@ -582,9 +577,12 @@ class EditCommentPage(Handler):
                 self.redirect("/")
                 return
             else:
-                comment = c.comment
-                self.render("editcomment.html", comment=comment,
-                            comment_id=comment_id)
+                if self.user_owns_comment(key):
+                    comment = c.comment
+                    self.render("editcomment.html", comment=comment,
+                                comment_id=comment_id)
+                else:
+                    self.redirect("/")
         else:
             self.redirect("/login")
 
@@ -599,14 +597,17 @@ class EditCommentPage(Handler):
                     self.redirect("/")
                     return
                 else:
-                    cm.comment = comment
-                    # p = Post(subject=subject, content=content,
-                    # creator=creator)
-                    cm.put()
-                    # go back to comments page for that post_id
-                    # self.redirect('/comment/%s' % cm.post_id)
-                    self.render("permacomment.html", comment=comment,
-                                post_id=cm.post_id)
+                    if self.user_owns_comment(key):
+                        cm.comment = comment
+                        # p = Post(subject=subject, content=content,
+                        # creator=creator)
+                        cm.put()
+                        # go back to comments page for that post_id
+                        # self.redirect('/comment/%s' % cm.post_id)
+                        self.render("permacomment.html", comment=comment,
+                                    post_id=cm.post_id)
+                    else:
+                        self.redirect("/")
             else:
                 self.redirect("/login")
         else:
@@ -624,12 +625,14 @@ class DeleteCommentPage(Handler):
                 self.redirect("/")
                 return
             else:
-                post_id = comment.post_id
-                svr = post_id  # have to double tap to ensure it stays...
-                comment.delete()  # somehow this deletes my post_id!!
-                self.render("success.html", deletedthing="comment", post_id=svr,
-                            write_out=True)
-                # back to comments list success
+                if self.user_owns_comment(key):
+                    post_id = comment.post_id
+                    svr = post_id  # have to double tap to ensure it stays...
+                    comment.delete()  # somehow this deletes my post_id!!
+                    self.render("success.html", deletedthing="comment",
+                                post_id=svr, write_out=True)
+                else:
+                    self.redirect("/")
         else:
             self.redirect("/login")
 
