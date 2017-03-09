@@ -2,13 +2,13 @@ import os
 import jinja2
 import webapp2
 import re
-import datetime
 import hashlib
 import hmac
 import random
 import string
 from string import letters
 from google.appengine.ext import db
+# import models
 
 
 ############################################
@@ -56,16 +56,61 @@ class Handler(webapp2.RequestHandler):
     def logout(self):
         self.response.headers.add_header('Set-Cookie', 'user=; Path=/')
 
-    def initialize(self, *a, **kw):
-        # checks to see if cookie exists at the beginning of the session
-        # called by App Engine
-        webapp2.RequestHandler.initialize(self, *a, **kw)
-        uid = self.read_secure_cookie('user_id')
-        self.user = uid and User.by_id(int(uid))
+    # def initialize(self, *a, **kw):
+    #     # checks to see if cookie exists at the beginning of the session
+    #     # called by App Engine
+    #     webapp2.RequestHandler.initialize(self, *a, **kw)
+    #     uid = self.read_secure_cookie('user')
+    #     self.user = uid and User.by_id(int(uid))
+    #     # not used
+
+    def good_cookie_exists(self):
+        h = self.request.cookies.get('user')  # cookie exists
+        loggedin = self.read_secure_cookie('user')  # cookie is legit
+        if h and loggedin:
+            return True
+        else:
+            return False
 
 
 ############################################
 # End set-up and housekeeping
+############################################
+
+############################################
+# Datastore models
+############################################
+
+
+class User(db.Model):
+    """Sub model for representing a blog author."""
+    username = db.StringProperty(required=True)
+    password = db.StringProperty(required=True)
+    email = db.StringProperty(required=False)
+
+
+class Post(db.Model):
+    """Sub model for representing a blog posting."""
+    subject = db.StringProperty(required=True)
+    content = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    last_modified = db.DateTimeProperty(auto_now=True)
+    creator = db.StringProperty(required=True)
+
+
+class Comment(db.Model):
+    post_id = db.StringProperty(required=True)
+    comment = db.StringProperty(required=True)
+    user = db.StringProperty(required=True)
+
+
+class Like(db.Model):
+    post_id = db.StringProperty(required=True)
+    user = db.StringProperty(required=True)
+
+
+############################################
+# End datastore models
 ############################################
 
 ############################################
@@ -119,40 +164,6 @@ def users_key(group='default'):
 # End authentication
 ############################################
 
-############################################
-# Datastore models
-############################################
-
-class User(db.Model):
-    """Sub model for representing a blog author."""
-    username = db.StringProperty(required=True)
-    password = db.StringProperty(required=True)
-    email = db.StringProperty(required=False)
-
-
-class Post(db.Model):
-    """Sub model for representing a blog posting."""
-    subject = db.StringProperty(required=True)
-    content = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    last_modified = db.DateTimeProperty(auto_now=True)
-    creator = db.StringProperty(required=True)
-
-
-class Comment(db.Model):
-    post_id = db.StringProperty(required=True)
-    comment = db.StringProperty(required=True)
-    user = db.StringProperty(required=True)
-
-
-class Like(db.Model):
-    post_id = db.StringProperty(required=True)
-    user = db.StringProperty(required=True)
-
-
-############################################
-# End datastore models
-############################################
 
 ############################################
 # Display initial blog page
@@ -161,9 +172,9 @@ class Like(db.Model):
 
 class MainPage(Handler):
     def render_front(self, creator):
-
         posts = Post.all().order('-created')
-        # posts = db.GqlQuery("select * from Post order by created desc limit 10")
+        # posts = db.GqlQuery("select * from Post order by created desc
+        # limit 10")
         # look for likes in Like entity for the current user (creator)
         likes = Like.all().filter("user = ", creator)
         dict = []
@@ -174,21 +185,21 @@ class MainPage(Handler):
         # turn dict into a set
         userlikes = set(dict)
         if posts:
-            self.render('index.html', posts=posts, creator=creator, userlikes=userlikes)
+            self.render('index.html', posts=posts, creator=creator,
+                        userlikes=userlikes)
         else:
             self.render('noposts.html')
 
     def get(self):
         # check for proper cookie
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.redirect("/login")
-        else:
+        if self.good_cookie_exists():
             # check for user to pass to index.html
             # user is first part of cookie
             h = self.request.cookies.get('user')
             creator = h.split("|")[0]
             self.render_front(creator)
+        else:
+            self.redirect("/login")
 
 ############################################
 # End display initial blog page
@@ -198,6 +209,7 @@ class MainPage(Handler):
 # Built-in user validations
 # (taken from lecture notes)
 ############################################
+
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 
@@ -234,13 +246,10 @@ class LoginPage(Handler):
 
     def get(self):
         # check for proper cookie
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render_login()
-        else:
+        if self.good_cookie_exists():
             self.redirect("/")
-        # the below works alone
-        # self.render_login()
+        else:
+            self.render_login()
 
     def post(self):
         name = self.request.get("name")
@@ -268,12 +277,10 @@ class LoginPage(Handler):
 class Signup(Handler):
     def get(self):
         # check for cookie
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            # self.logout()  # clear cookie if one exits
-            self.render("signup.html")
-        else:
+        if self.good_cookie_exists():
             self.redirect("/")
+        else:
+            self.render("signup.html")
 
     def post(self):
         have_error = False
@@ -351,12 +358,10 @@ class LogoutPage(Handler):
 
 class NewPost(Handler):
     def get(self):
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            # self.logout()  # clear cookie if one exits
-            self.render("signup.html")
-        else:
+        if self.good_cookie_exists():
             self.render("edit_post.html")
+        else:
+            self.redirect("/login")
 
     def post(self):
 
@@ -369,15 +374,17 @@ class NewPost(Handler):
         content = self.request.get('content')
 
         if subject and content:
-            # get user name from cookie
-            h = self.request.cookies.get('user')
-            creator = h.split("|")[0]
-            # write to DB...
-            p = Post(subject=subject, content=content,
-                     creator=creator)
-            p.put()  # commit entry
-            pid = p.key().id()
-            self.redirect('/blog/%s' % str(pid))
+            if self.good_cookie_exists():
+                h = self.request.cookies.get('user')
+                creator = h.split("|")[0]
+                # write to DB
+                p = Post(subject=subject, content=content,
+                         creator=creator)
+                p.put()  # commit entry
+                pid = p.key().id()
+                self.redirect('/blog/%s' % str(pid))
+            else:
+                self.redirect('/login')
         else:
             error = "Please enter both a subject and content."
             self.render("edit_post.html", subject=subject, content=content,
@@ -395,10 +402,7 @@ class NewPost(Handler):
 class PostPage(Handler):
     def get(self, post_id):
 
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render("signup.html")
-        else:
+        if self.good_cookie_exists():
             # get user name from cookie
             h = self.request.cookies.get('user')
             user = h.split("|")[0]
@@ -413,6 +417,8 @@ class PostPage(Handler):
             creator = p.creator
             self.render("permalink.html", subject=subject, content=content,
                         creator=creator, user=user, post_id=post_id)
+        else:
+            self.render("signup.html")
 
 
 ############################################
@@ -445,35 +451,46 @@ class TestPage(Handler):
 
 class EditExisting(Handler):
     def get(self, post_id):
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render("signup.html")
-        else:
+        if self.good_cookie_exists():
             key = db.Key.from_path('Post', int(post_id))
+            # if key:
+            #     self.redirect("/")
+
             post = db.get(key)
             if post:
                 subject = post.subject
                 content = post.content
+            else:
+                self.redirect("/")
             self.render("edit_post2.html", subject=subject, content=content,
                         post_id=post_id)
+        else:
+            self.redirect("/login")
 
     def post(self, post_id):
         subject = self.request.get('subject')
         content = self.request.get('content')
 
         if subject and content:
-            # get user name from cookie
-            h = self.request.cookies.get('user')
-            creator = h.split("|")[0]
-            # write to DB...
-            key = db.Key.from_path('Post', int(post_id))
-            post = db.get(key)
-            post.subject = subject
-            post.content = content
-            post.creator = creator
-            # p = Post(subject=subject, content=content, creator=creator)
-            post.put()
-            self.redirect('/blog/%s' % str(post_id))
+            if self.good_cookie_exists():
+                h = self.request.cookies.get('user')
+                creator = h.split("|")[0]
+                # write to DB...
+                key = db.Key.from_path('Post', int(post_id))
+                post = db.get(key)
+                # hooch - not sure about this
+                if not post:
+                    self.redirect("/")
+                
+                else:
+                    post.subject = subject
+                    post.content = content
+                    post.creator = creator
+                    # p = Post(subject=subject, content=content, creator=creator)
+                    post.put()
+                    self.redirect('/blog/%s' % str(post_id))
+            else:
+                self.redirect("/login")
         else:
             error = "Please enter both subject and content"
             self.render("edit_post2.html", subject=subject, content=content,
@@ -482,17 +499,16 @@ class EditExisting(Handler):
 
 class DeletePostPage(Handler):
     def get(self, post_id):
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render("login.html")
-        else:
+        if self.good_cookie_exists():
             #  delete the post
             key = db.Key.from_path('Post', int(post_id))
             post = db.get(key)
-            #already have post_id
+            # already have post_id
             post.delete()
-            self.render("success.html", deletedthing="post", post_id=post_id, 
+            self.render("success.html", deletedthing="post", post_id=post_id,
                         write_out=False)
+        else:
+            self.redirect("/login")
 
 
 ############################################
@@ -506,11 +522,7 @@ class DeletePostPage(Handler):
 
 class CommentPage(Handler):
     def get(self, post_id):
-        # check to see if valid cookie
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render("signup.html")
-        else:
+        if self.good_cookie_exists():
             # get user name from cookie
             h = self.request.cookies.get('user')
             curuser = h.split("|")[0]
@@ -523,30 +535,33 @@ class CommentPage(Handler):
             subject = p.subject
             self.render("comments.html", comments=comments, post_id=post_id,
                         curuser=curuser, subject=subject)
+        else:
+            self.redirect("/login")
 
 
 class NewCommentPage(Handler):
     def get(self, post_id):
-        # check to see if valid cookie
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render("signup.html")
-        else:
+        if self.good_cookie_exists():
             self.render("newcomment.html", post_id=post_id)
+        else:
+            self.redirect("/login")
 
     def post(self, post_id):
         comment = self.request.get('comment')
         if comment:
-            # get user name from cookie
-            h = self.request.cookies.get('user')
-            creator = h.split("|")[0]
-            # write new comment to DB...
-            c = Comment(post_id=post_id, comment=comment, user=creator)
-            c.put()  # commit entry
-            # go back to comments page for that post_id
-            # self.redirect('/comment/%s' % post_id) # not showing new data
-            self.render("permacomment.html", comment=comment,
-                        post_id=post_id)
+            if self.good_cookie_exists():
+                # get user name from cookie
+                h = self.request.cookies.get('user')
+                creator = h.split("|")[0]
+                # write new comment to DB...
+                c = Comment(post_id=post_id, comment=comment, user=creator)
+                c.put()  # commit entry
+                # go back to comments page for that post_id
+                # self.redirect('/comment/%s' % post_id) # not showing new data
+                self.render("permacomment.html", comment=comment,
+                            post_id=post_id)
+            else:
+                self.redirect("/login")
         else:
             error = "Please enter text"
             self.render("newcomment.html", post_id=post_id,
@@ -555,11 +570,7 @@ class NewCommentPage(Handler):
 
 class EditCommentPage(Handler):
     def get(self, comment_id):
-        # check to see if valid cookie
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render("signup.html")
-        else:
+        if self.good_cookie_exists():
             # from DB, get info on that comment
             key = db.Key.from_path('Comment', int(comment_id))
             c = db.get(key)
@@ -569,20 +580,25 @@ class EditCommentPage(Handler):
                             comment_id=comment_id)
             else:
                 self.redirect("/")
+        else:
+            self.redirect("/login")
 
     def post(self, comment_id):
         comment = self.request.get('comment')
         if comment:
-            # write edits to DB...
-            key = db.Key.from_path('Comment', int(comment_id))
-            cm = db.get(key)
-            cm.comment = comment
-            # p = Post(subject=subject, content=content, creator=creator)
-            cm.put()
-            # go back to comments page for that post_id
-            # self.redirect('/comment/%s' % cm.post_id)
-            self.render("permacomment.html", comment=comment,
-                        post_id=cm.post_id)
+            if self.good_cookie_exists():
+                # write edits to DB...
+                key = db.Key.from_path('Comment', int(comment_id))
+                cm = db.get(key)
+                cm.comment = comment
+                # p = Post(subject=subject, content=content, creator=creator)
+                cm.put()
+                # go back to comments page for that post_id
+                # self.redirect('/comment/%s' % cm.post_id)
+                self.render("permacomment.html", comment=comment,
+                            post_id=cm.post_id)
+            else:
+                self.redirect("/login")
         else:
             error = "Please enter text"
             self.render("editcomment.html", error=error)
@@ -590,20 +606,18 @@ class EditCommentPage(Handler):
 
 class DeleteCommentPage(Handler):
     def get(self, comment_id):
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render("login.html")
-        else:
+        if self.good_cookie_exists():
             #  delete the comment
             key = db.Key.from_path('Comment', int(comment_id))
             comment = db.get(key)
             post_id = comment.post_id
             svr = post_id  # have to double tap to ensure it stays...
             comment.delete()  # somehow this deletes my post_id!!
-            # self.redirect("/")
-            self.render("success.html", deletedthing="comment", post_id=svr, 
+            self.render("success.html", deletedthing="comment", post_id=svr,
                         write_out=True)
             # back to comments list success
+        else:
+            self.redirect("/login")
 
 
 ############################################
@@ -617,10 +631,7 @@ class DeleteCommentPage(Handler):
 
 class LikePage(Handler):
     def get(self, post_id):
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render("login.html")
-        else:
+        if self.good_cookie_exists():
             #  put the user id and post_id into the Like entity
             #  go to success page, which will have link to home
             h = self.request.cookies.get('user')
@@ -629,24 +640,25 @@ class LikePage(Handler):
             l = Like(post_id=post_id, user=curusor)
             l.put()  # commit entry
             self.render("successlike.html", loul="liked")
-
+        else:
+            self.redirect("/login")
 
 class UnLikePage(Handler):
     def get(self, post_id):
-        loggedin = self.read_secure_cookie('user')
-        if loggedin is None:
-            self.render("login.html")
-        else:
+        if self.good_cookie_exists():
             # delete that SPECIFIC like from DB
             # MUST match both user and post_id
             h = self.request.cookies.get('user')
             user = h.split("|")[0]
             post_id = str(post_id)
-            likes = Like.all().filter("user = ", user).filter("post_id = ", post_id)
+            likes = Like.all().filter("user = ", user).filter("post_id = ",
+                                                              post_id)
             key = likes.get().key()
             key_go = db.get(key)
             key_go.delete()
             self.render("successlike.html", loul="unliked")
+        else:
+            self.redirect("/login")
 
 
 ############################################
