@@ -189,6 +189,7 @@ class MainPage(Handler):
             self.render_front(creator)
         else:
             self.redirect("/login")
+            return
 
 ############################################
 # End display initial blog page
@@ -237,6 +238,7 @@ class LoginPage(Handler):
         # check for proper cookie
         if self.good_cookie_exists():
             self.redirect("/")
+            return
         else:
             self.render_login()
 
@@ -252,6 +254,7 @@ class LoginPage(Handler):
                     self.set_secure_cookie(str('user'), str(name))
                     # redirect to home page
                     self.redirect("/")
+                    return
                 else:
                     error = "Invalid user name or password"
                     self.render_login(name=name, error=error)
@@ -268,6 +271,7 @@ class Signup(Handler):
         # check for cookie
         if self.good_cookie_exists():
             self.redirect("/")
+            return
         else:
             self.render("signup.html")
 
@@ -316,6 +320,7 @@ class Signup(Handler):
             # now create a cookie for the new user
             self.set_secure_cookie(str('user'), str(username))
             self.redirect('/welcome?username=' + username)
+            return
 
 
 class Welcome(Handler):
@@ -325,12 +330,14 @@ class Welcome(Handler):
             self.render('welcome.html', username=username)
         else:
             self.redirect('/signup')
+            return
 
 
 class LogoutPage(Handler):
     def get(self):
         self.logout()
         self.redirect('/login')
+        return
 
 ############################################
 # End initial pages handling: login and signup
@@ -351,6 +358,7 @@ class NewPost(Handler):
             self.render("edit_post.html")
         else:
             self.redirect("/login")
+            return
 
     def post(self):
 
@@ -358,6 +366,7 @@ class NewPost(Handler):
 
         if self.request.get("cancel"):
             self.redirect("/")
+            return
 
         subject = self.request.get('subject')
         content = self.request.get('content')
@@ -372,8 +381,10 @@ class NewPost(Handler):
                 p.put()  # commit entry
                 pid = p.key().id()
                 self.redirect('/blog/%s' % str(pid))
+                return
             else:
                 self.redirect('/login')
+                return
         else:
             error = "Please enter both a subject and content."
             self.render("edit_post.html", subject=subject, content=content,
@@ -453,8 +464,10 @@ class EditExisting(Handler):
                                 content=content, post_id=post_id)
                 else:
                     self.redirect("/")
+                    return
         else:
             self.redirect("/login")
+            return
 
     def post(self, post_id):
         subject = self.request.get('subject')
@@ -503,8 +516,10 @@ class DeletePostPage(Handler):
                                 post_id=post_id, write_out=False)
                 else:
                     self.redirect("/")
+                    return
         else:
             self.redirect("/login")
+            return
 
 
 ############################################
@@ -536,6 +551,7 @@ class CommentPage(Handler):
                         curuser=curuser, subject=subject)
         else:
             self.redirect("/login")
+            return
 
 
 class NewCommentPage(Handler):
@@ -544,6 +560,7 @@ class NewCommentPage(Handler):
             self.render("newcomment.html", post_id=post_id)
         else:
             self.redirect("/login")
+            return
 
     def post(self, post_id):
         comment = self.request.get('comment')
@@ -561,6 +578,7 @@ class NewCommentPage(Handler):
                             post_id=post_id)
             else:
                 self.redirect("/login")
+                return
         else:
             error = "Please enter text"
             self.render("newcomment.html", post_id=post_id,
@@ -583,8 +601,10 @@ class EditCommentPage(Handler):
                                 comment_id=comment_id)
                 else:
                     self.redirect("/")
+                    return
         else:
             self.redirect("/login")
+            return
 
     def post(self, comment_id):
         comment = self.request.get('comment')
@@ -608,8 +628,10 @@ class EditCommentPage(Handler):
                                     post_id=cm.post_id)
                     else:
                         self.redirect("/")
+                        return
             else:
                 self.redirect("/login")
+                return
         else:
             error = "Please enter text"
             self.render("editcomment.html", error=error)
@@ -633,8 +655,10 @@ class DeleteCommentPage(Handler):
                                 post_id=svr, write_out=True)
                 else:
                     self.redirect("/")
+                    return
         else:
             self.redirect("/login")
+            return
 
 
 ############################################
@@ -653,12 +677,30 @@ class LikePage(Handler):
             #  go to success page, which will have link to home
             h = self.request.cookies.get('user')
             curusor = h.split("|")[0]
-            # new Like entity
-            l = Like(post_id=post_id, user=curusor)
-            l.put()  # commit entry
-            self.render("successlike.html", loul="liked")
+            # make sure user doesn't own post
+            post_key = db.Key.from_path('Post', int(post_id))  # returning something, but what???
+            if db.get(post_key) is not None:  # if post exists, continue
+                owns = self.user_owns_post(post_key)
+                if owns:  # if user owns the post, end
+                    self.redirect("/")
+                    return
+                else:  # otherwise post exists and user is not owner
+                    likes = Like.all().filter("post_id = ", str(post_id)).filter("user = ", curusor)  # NOQA
+                    if likes.get() is not None:
+                        # that user has already liked this post
+                        self.redirect("/")  # UI blocks multiple liking as well
+                        return
+                    else:
+                        # new Like entity
+                        l = Like(post_id=post_id, user=curusor)
+                        l.put()  # commit entry
+                        self.render("successlike.html", loul="liked")
+            else:
+                self.redirect("/")
+                return
         else:
             self.redirect("/login")
+            return
 
 
 class UnLikePage(Handler):
@@ -668,15 +710,33 @@ class UnLikePage(Handler):
             # MUST match both user and post_id
             h = self.request.cookies.get('user')
             user = h.split("|")[0]
-            post_id = str(post_id)
-            likes = Like.all().filter("user = ", user).filter("post_id = ",
-                                                              post_id)
-            key = likes.get().key()
-            key_go = db.get(key)
-            key_go.delete()
-            self.render("successlike.html", loul="unliked")
+            post_id_s = str(post_id)
+            # make sure current user doesn't own the post
+            # user post_id to query Post
+            post_key = db.Key.from_path('Post', int(post_id))
+            if db.get(post_key) is not None:
+                owns = self.user_owns_post(post_key)
+                if owns:
+                    self.redirect("/")
+                    return
+                else:
+                    likes = Like.all().filter("user = ", user).filter("post_id = ", # NOQA
+                                                                      post_id_s) # NOQA
+                    key = likes.get().key()
+                    key_go = db.get(key)
+                    # verify the like exists
+                    if not key_go:
+                        self.redirect("/")
+                        return
+                    else:
+                        key_go.delete()
+                        self.render("successlike.html", loul="unliked")
+            else:
+                self.redirect("/")
+                return
         else:
             self.redirect("/login")
+            return
 
 
 ############################################
