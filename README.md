@@ -50,7 +50,7 @@ To set up the project, unzip files to a system folder, maintaining the directory
   
 ## Other details
 
-The project can be viewed on Google App Engine's environment at [https://blog-udacity-160117.appspot.com/] (https://blog-udacity-160117.appspot.com/)
+The project can be viewed on [Google App Engine's environment](https://blog-udacity-160117.appspot.com/).
 
 
 ## Creator
