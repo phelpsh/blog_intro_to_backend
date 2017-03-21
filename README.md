@@ -1,6 +1,6 @@
 # Multi-user Blog for Intro to Backend Udacity Course
 
-Final project for the Udacity course “Intro to Backend” in support of the [Full Stack Web Developer Nanodegree](https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd004) Application written using Bootstrap, Google App Engine, Google Datastore. Written in Python, HTML, and CSS using fully responsive web design. Uses App Engine's included Jinja2 templates. Code editor: Sublime Text with Flask8 Linter. Cookies and passwords salted and hashed using SHA256.
+Final project for the Udacity course “Intro to Backend” in support of the [Full Stack Web Developer Nanodegree].(https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd004) Application written using Bootstrap, Google App Engine, Google Datastore. Written in Python, HTML, and CSS using fully responsive web design. Uses App Engine's included Jinja2 templates. Code editor: Sublime Text with Flask8 Linter. Cookies and passwords salted and hashed using SHA256.
 
 ## Quickstart:
 
